@@ -25,7 +25,7 @@ from keras.layers.pooling import MaxPooling2D
 import keras.backend as K
 from keras.models import load_model
 
-datasetpath = output_path + '/dataset.hdf5'
+# datasetpath = output_path + '/dataset.hdf5'
 patch_size = 32
 batch_size = 256
 epoch = 200
@@ -255,10 +255,15 @@ from PIL import Image
 from keras.preprocessing.image import load_img, img_to_array, array_to_img, save_img
 from keras.models import load_model
 
-test_path = '/content/drive/My Drive/Research/test/real/'
-pred_path = test_path + 'predict/'
-data_path = test_path + 'crop/'
-gen_model = load_model( '/content/drive/My Drive/Research/test/real/gen_model.h5')
+import tensorflow as tf
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+tf.keras.backend.set_session(tf.Session(config=config))
+
+input_path = 'C:/Users/bumpo/Documents/Research/dataset/real_image/'
+pred_path = input_path + 'gen/'
+data_path = input_path + 'gray/'
+gen_model = load_model(input_path + 'gen_model.h5')
 
 for i in range(9):
     #load

@@ -254,26 +254,31 @@ def get_disc_batch(procImage, rawImage, generator_model, batch_counter, patch_si
 from PIL import Image
 from keras.preprocessing.image import load_img, img_to_array, array_to_img, save_img
 from keras.models import load_model
-
 import tensorflow as tf
+import glob
+
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 tf.keras.backend.set_session(tf.Session(config=config))
 
-input_path = 'C:/Users/bumpo/Documents/Research/dataset/real_image/'
-pred_path = input_path + 'gen/'
-data_path = input_path + 'gray/'
-gen_model = load_model(input_path + 'gen_model.h5')
+data_path = 'C:/Users/bumpo/Documents/Research/dataset/RandomLight/gray/test/'
+gen_path = data_path + 'gen/'
+input_path = data_path + 'input/'
+gen_model = load_model(data_path + 'gen_model_60k.h5')
 
-for i in range(9):
+input_imgs = glob.glob(input_path + '*.jpg')
+img_num = len(input_imgs)
+img_size = (128, 128)
+
+for i in range(img_num):
     #load
-    img = load_img(data_path + str(i) + '.jpg', target_size=(128,128))
+    img = load_img(input_path + str(i) + '.jpg', target_size=img_size)
     array = img_to_array(img)
     in_array = []
     in_array.append(array)
     in_array = np.array(in_array)
 
-    #predict
+    #generate
     start = time.time()
     norm = normalization(in_array)
     test = gen_model.predict(norm)
@@ -285,7 +290,7 @@ for i in range(9):
     Xg = to3d(test[:1])
     Xg = np.concatenate(Xg, axis=1)
     pred = array_to_img(Xg)
-    save_img(pred_path + str(i) + '.jpg', pred)
+    save_img(gen_path + str(i) + '.jpg', pred)
 
 
 

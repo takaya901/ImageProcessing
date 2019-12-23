@@ -91,7 +91,8 @@ with open(log_path, mode='x') as f:
         # cv2.destroyAllWindows()
 
         error = rmse(gt_gray, gen_gray, mask)
-        error_list.append(error)
+        if error != 0
+            error_list.append(error)
         print(i, error)
         f.write(f'{i} {error}\n')
 

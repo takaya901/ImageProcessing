@@ -5,8 +5,8 @@ import h5py
 from keras.preprocessing.image import load_img, img_to_array
 from PIL import Image
 
-dataset_path = 'C:/Users/bumpo/Documents/Research/dataset/RandomLight/gray'
-output_path =  'C:/Users/bumpo/Documents/Research/dataset/RandomLight/gray/output'
+dataset_path = 'C:/Users/bumpo/Documents/Research/dataset/white/gray'
+hdf5_path =  'C:/Users/bumpo/Documents/Research/dataset/white/gray/hdf5'
 
 orgs = []
 masks = []
@@ -60,7 +60,7 @@ print('mask imgs : ', gimgs.shape)
 print('test org  : ', vimgs.shape)
 print('test tset : ', vgimgs.shape)
 
-outh5 = h5py.File(output_path + '/dataset.hdf5', 'w')
+outh5 = h5py.File(hdf5_path + '/dataset.hdf5', 'w')
 outh5.create_dataset('TrainInputTarget', data=imgs)
 outh5.create_dataset('TrainGTTarget', data=gimgs)
 outh5.create_dataset('TestInputTarget', data=vimgs)

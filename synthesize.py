@@ -28,10 +28,10 @@ config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
 K.set_session(sess)
 
-output_path = '/mnt/franky2/t_ogawa/DockerTest/output'
-datasetpath = output_path + '/dataset.hdf5'
+output_path = 'C:/Users/bumpo/Documents/Research/dataset/white/gray/output'
+datasetpath = 'C:/Users/bumpo/Documents/Research/dataset/white/gray/hdf5/dataset.hdf5'
 patch_size = 32
-batch_size = 1024
+batch_size = 128
 epoch = 2000
 loss_list = []
 
@@ -40,13 +40,13 @@ def normalization(X):
 
 def load_data(datasetpath):
     with h5py.File(datasetpath, "r") as hf:
-        X_full_train = hf["TrainWithoutTarget"][:].astype(np.float32)
+        X_full_train = hf["TrainInputTarget"][:].astype(np.float32)
         X_full_train = normalization(X_full_train)
-        X_sketch_train = hf["TrainWithTarget"][:].astype(np.float32)
+        X_sketch_train = hf["TrainGTTarget"][:].astype(np.float32)
         X_sketch_train = normalization(X_sketch_train)
-        X_full_val = hf["TestWithoutTarget"][:].astype(np.float32)
+        X_full_val = hf["TestInputTarget"][:].astype(np.float32)
         X_full_val = normalization(X_full_val)
-        X_sketch_val = hf["TestWithTarget"][:].astype(np.float32)
+        X_sketch_val = hf["TestGTTarget"][:].astype(np.float32)
         X_sketch_val = normalization(X_sketch_val)
         return X_full_train, X_sketch_train, X_full_val, X_sketch_val
 
@@ -274,7 +274,8 @@ def train():
     DCGAN_model = load_DCGAN(generator_model, discriminator_model, img_shape, patch_size)
 
     loss = [l1_loss, 'binary_crossentropy']
-    loss_weights = [1E1, 1]
+    # loss_weights = [1E1, 1]
+    loss_weights = [1E3, 1]
     DCGAN_model.compile(loss=loss, loss_weights=loss_weights, optimizer=opt_dcgan)
 
     discriminator_model.trainable = True
@@ -335,7 +336,7 @@ def train():
             continue
         if e % 100 == 0:
             generator_model.save(output_path + '/gen_model' + str(e) + '.h5')
-        if e % 10 == 0:          
+        if e % 50 == 0:          
             height = np.array(range(len(loss_list)))
             plot.plot(height, loss_list)
             plot.xlabel("Epoch")
@@ -349,27 +350,7 @@ def train():
     plot.savefig(output_path + '/loss.png')
         
     generator_model.save(output_path + '/gen_model.h5')
-    
-#     from keras.models import load_model
 
-# #     gen_model = load_model(output_path + '/gen_model.h5')
-#     img = load_img('1.jpg', target_size=(64,64))
-#     array = img_to_array(img)
-    
-#     in_array = []
-#     in_array.append(array)
-#     in_array = np.array(in_array)    
-    
-#     test = generator_model.predict(in_array)
-#     X_gen = inverse_normalization(test)
-#     Xg = to3d(X_gen)
-#     Xg = np.concatenate(Xg, axis=1)
-
-#     plt.imshow(Xg)
-#     plt.axis('off')
-#     plt.savefig(output_path + '/predict.png')
-#     plt.clf()
-#     plt.close()
 
 def resume_train():
     # load data

@@ -14,7 +14,6 @@ import matplotlib.pyplot as plot
 import keras.backend as K
 from keras.utils import generic_utils
 from keras.optimizers import Adam, SGD
-
 from keras.models import Model
 from keras.layers.core import Flatten, Dense, Dropout, Activation, Lambda, Reshape
 from keras.layers.convolutional import Conv2D, Deconv2D, ZeroPadding2D, UpSampling2D
@@ -247,10 +246,7 @@ def get_disc_batch(procImage, rawImage, generator_model, batch_counter, patch_si
     X_disc = extract_patches(X_disc, patch_size)
     return X_disc, y_disc
 
-# %% [markdown]
-# #学習済みモデルで予測
 
-# %%
 from PIL import Image
 from keras.preprocessing.image import load_img, img_to_array, array_to_img, save_img
 from keras.models import load_model
@@ -261,10 +257,12 @@ config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 tf.keras.backend.set_session(tf.Session(config=config))
 
-data_path = 'C:/Users/bumpo/Documents/Research/dataset/RandomLight/gray/test/'
+data_path = 'C:/Users/bumpo/Documents/Research/dataset/white/gray/test/'
+# data_path = 'C:/Users/bumpo/Documents/Research/NDDS2/Captured/train/input/gray/'
 gen_path = data_path + 'gen/'
-input_path = data_path + 'input/'
-gen_model = load_model(data_path + 'gen_model_60k.h5')
+# input_path = data_path + 'input/'
+input_path = 'C:/Users/bumpo/Documents/Research/dataset/real_image/gray/input/'
+gen_model = load_model(data_path + 'gen_model.h5')
 
 input_imgs = glob.glob(input_path + '*.jpg')
 img_num = len(input_imgs)
@@ -292,228 +290,4 @@ for i in range(img_num):
     pred = array_to_img(Xg)
     save_img(gen_path + str(i) + '.jpg', pred)
 
-
-
 # %%
-# def train():
-#     # load data
-#     rawImage, procImage, rawImage_val, procImage_val = load_data(datasetpath)
-
-#     img_shape = rawImage.shape[-3:]
-#     patch_num = (img_shape[0] // patch_size) * (img_shape[1] // patch_size)
-#     disc_img_shape = (patch_size, patch_size, procImage.shape[-1])
-
-#     # train
-#     opt_dcgan = Adam(lr=1E-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-#     opt_discriminator = Adam(lr=1E-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-
-#     # load generator model
-#     generator_model = load_generator(img_shape, disc_img_shape)
-#     # load discriminator model
-#     discriminator_model = load_DCGAN_discriminator(img_shape, disc_img_shape, patch_num)
-
-#     generator_model.compile(loss='mae', optimizer=opt_discriminator)
-#     discriminator_model.trainable = False
-
-#     DCGAN_model = load_DCGAN(generator_model, discriminator_model, img_shape, patch_size)
-
-#     loss = [l1_loss, 'binary_crossentropy']
-#     loss_weights = [1E1, 1]
-#     DCGAN_model.compile(loss=loss, loss_weights=loss_weights, optimizer=opt_dcgan)
-
-#     discriminator_model.trainable = True
-#     discriminator_model.compile(loss='binary_crossentropy', optimizer=opt_discriminator)
-
-#     # start training
-#     print('start training')
-#     for e in range(epoch):
-
-#         starttime = time.time()
-#         perm = np.random.permutation(rawImage.shape[0])
-#         X_procImage = procImage[perm]
-#         X_rawImage  = rawImage[perm]
-#         X_procImageIter = [X_procImage[i:i+batch_size] for i in range(0, rawImage.shape[0], batch_size)]
-#         X_rawImageIter  = [X_rawImage[i:i+batch_size] for i in range(0, rawImage.shape[0], batch_size)]
-#         b_it = 0
-#         progbar = generic_utils.Progbar(len(X_procImageIter)*batch_size)
-#         for (X_proc_batch, X_raw_batch) in zip(X_procImageIter, X_rawImageIter):
-#             b_it += 1
-#             X_disc, y_disc = get_disc_batch(X_proc_batch, X_raw_batch, generator_model, b_it, patch_size)
-#             raw_disc, _ = get_disc_batch(X_raw_batch, X_raw_batch, generator_model, 1, patch_size)
-#             x_disc = X_disc + raw_disc
-#             # update the discriminator
-#             disc_loss = discriminator_model.train_on_batch(x_disc, y_disc)
-
-#             # create a batch to feed the generator model
-#             idx = np.random.choice(procImage.shape[0], batch_size)
-#             X_gen_target, X_gen = procImage[idx], rawImage[idx]
-#             y_gen = np.zeros((X_gen.shape[0], 2), dtype=np.uint8)
-#             y_gen[:, 1] = 1
-
-#             # Freeze the discriminator
-#             discriminator_model.trainable = False
-#             gen_loss = DCGAN_model.train_on_batch(X_gen, [X_gen_target, y_gen])
-#             # Unfreeze the discriminator
-#             discriminator_model.trainable = True
-
-#             progbar.add(batch_size, values=[
-#                 ("D logloss", disc_loss),
-#                 ("G tot", gen_loss[0]),
-#                 ("G L1", gen_loss[1]),
-#                 ("G logloss", gen_loss[2])
-#             ])
-
-#             if b_it % (procImage.shape[0]//batch_size) == 0:
-#                 loss_list.append(gen_loss[0])
-                
-#             # save images for visualization
-#             if b_it % (procImage.shape[0]//batch_size//2) == 0 and e % 10 == 0:
-#                 plot_generated_batch(X_proc_batch, X_raw_batch, generator_model, batch_size, "training"+str(e))
-#                 idx = np.random.choice(procImage_val.shape[0], batch_size)
-#                 X_gen_target, X_gen = procImage_val[idx], rawImage_val[idx]
-#                 plot_generated_batch(X_gen_target, X_gen, generator_model, batch_size, "validation"+str(e))
-#                 generator_model.save(output_path + '/gen_model.h5')
-
-#         print("")
-#         print('Epoch %s/%s, Time: %s' % (e + 1, epoch, time.time() - starttime))
-#         if (e+1) % 2 == 0:          
-#             height = np.array(range(e+1))
-#             plot.plot(height, loss_list)
-#             plot.xlabel("Epoch")
-#             plot.ylabel("Loss")
-#             plot.savefig(output_path + '/loss.png')
-    
-#     height = np.array(range(epoch))
-#     plot.plot(height, loss_list)
-#     plot.xlabel("Epoch")
-#     plot.ylabel("Loss")
-#     plot.savefig(output_path + '/loss.png')
-#     plot.show()
-        
-#     generator_model.save(output_path + '/gen_model.h5')
-    
-#     from keras.models import load_model
-
-# #     gen_model = load_model(output_path + '/gen_model.h5')
-#     img = load_img('1.jpg', target_size=(64,64))
-#     array = img_to_array(img)
-    
-#     in_array = []
-#     in_array.append(array)
-#     in_array = np.array(in_array)    
-    
-#     test = generator_model.predict(in_array)
-#     X_gen = inverse_normalization(test)
-#     Xg = to3d(X_gen)
-#     Xg = np.concatenate(Xg, axis=1)
-
-#     plt.imshow(Xg)
-#     plt.axis('off')
-#     plt.savefig(output_path + '/predict.png')
-#     plt.clf()
-#     plt.close()
-
-# loss_list = []
-# train()
-
-# def resume_train():
-#     # load data
-#     rawImage, procImage, rawImage_val, procImage_val = load_data(datasetpath)
-
-#     img_shape = rawImage.shape[-3:]
-#     patch_num = (img_shape[0] // patch_size) * (img_shape[1] // patch_size)
-#     disc_img_shape = (patch_size, patch_size, procImage.shape[-1])
-
-#     # train
-#     opt_dcgan = Adam(lr=1E-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-#     opt_discriminator = Adam(lr=1E-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-
-#     # load generator model
-# #     generator_model = load_generator(img_shape, disc_img_shape)
-#     generator_model = load_model(output_path + '/gen_model.h5')
-#     # load discriminator model
-#     discriminator_model = load_DCGAN_discriminator(img_shape, disc_img_shape, patch_num)
-
-# #     generator_model.compile(loss='mae', optimizer=opt_discriminator)
-#     discriminator_model.trainable = False
-
-#     DCGAN_model = load_DCGAN(generator_model, discriminator_model, img_shape, patch_size)
-
-#     loss = [l1_loss, 'binary_crossentropy']
-#     loss_weights = [1E1, 1]
-#     DCGAN_model.compile(loss=loss, loss_weights=loss_weights, optimizer=opt_dcgan)
-
-#     discriminator_model.trainable = True
-#     discriminator_model.compile(loss='binary_crossentropy', optimizer=opt_discriminator)
-
-#     # start training
-#     print('start training')
-#     for e in range(epoch):
-
-#         starttime = time.time()
-#         perm = np.random.permutation(rawImage.shape[0])
-#         X_procImage = procImage[perm]
-#         X_rawImage  = rawImage[perm]
-#         X_procImageIter = [X_procImage[i:i+batch_size] for i in range(0, rawImage.shape[0], batch_size)]
-#         X_rawImageIter  = [X_rawImage[i:i+batch_size] for i in range(0, rawImage.shape[0], batch_size)]
-#         b_it = 0
-#         progbar = generic_utils.Progbar(len(X_procImageIter)*batch_size)
-#         for (X_proc_batch, X_raw_batch) in zip(X_procImageIter, X_rawImageIter):
-#             b_it += 1
-#             X_disc, y_disc = get_disc_batch(X_proc_batch, X_raw_batch, generator_model, b_it, patch_size)
-#             raw_disc, _ = get_disc_batch(X_raw_batch, X_raw_batch, generator_model, 1, patch_size)
-#             x_disc = X_disc + raw_disc
-#             # update the discriminator
-#             disc_loss = discriminator_model.train_on_batch(x_disc, y_disc)
-
-#             # create a batch to feed the generator model
-#             idx = np.random.choice(procImage.shape[0], batch_size)
-#             X_gen_target, X_gen = procImage[idx], rawImage[idx]
-#             y_gen = np.zeros((X_gen.shape[0], 2), dtype=np.uint8)
-#             y_gen[:, 1] = 1
-
-#             # Freeze the discriminator
-#             discriminator_model.trainable = False
-#             gen_loss = DCGAN_model.train_on_batch(X_gen, [X_gen_target, y_gen])
-#             # Unfreeze the discriminator
-#             discriminator_model.trainable = True
-
-#             progbar.add(batch_size, values=[
-#                 ("D logloss", disc_loss),
-#                 ("G tot", gen_loss[0]),
-#                 ("G L1", gen_loss[1]),
-#                 ("G logloss", gen_loss[2])
-#             ])
-
-#             if b_it % (procImage.shape[0]//batch_size) == 0:
-#                 loss_list.append(gen_loss[0])
-                
-#             # save images for visualization
-#             if b_it % (procImage.shape[0]//batch_size) == 0 and e % 10 == 0:
-#                 plot_generated_batch(X_proc_batch, X_raw_batch, generator_model, batch_size, "training"+str(e))
-#                 idx = np.random.choice(procImage_val.shape[0], batch_size)
-#                 X_gen_target, X_gen = procImage_val[idx], rawImage_val[idx]
-#                 plot_generated_batch(X_gen_target, X_gen, generator_model, batch_size, "validation"+str(e))
-#                 generator_model.save(output_path + '/gen_model.h5')
-
-#         print("")
-#         print('Epoch %s/%s, Time: %s' % (e + 1, epoch, time.time() - starttime))
-#         if e % 100 == 0:          
-#             height = np.array(range(len(loss_list)))
-#             plot.plot(height, loss_list)
-#             plot.xlabel("Epoch")
-#             plot.ylabel("Loss")
-#             plot.savefig(output_path + '/loss.png')
-    
-#     height = np.array(range(epoch))
-#     plot.plot(height, loss_list)
-#     plot.xlabel("Epoch")
-#     plot.ylabel("Loss")
-#     plot.savefig(output_path + '/loss.png')
-#     plot.show()
-        
-#     generator_model.save(output_path + '/gen_model.h5')
-
-# loss_list = []
-# resume_train()
-
